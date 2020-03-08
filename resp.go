@@ -1,6 +1,7 @@
 package req
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -92,6 +93,46 @@ func (r *Resp) ToXML(v interface{}) error {
 		return err
 	}
 	return xml.Unmarshal(data, v)
+}
+
+// Tostring whith with optional download callback 2020.03.09
+func (r *Resp) ToStringWithTimeCallBack() (string, error) {
+	if r.downloadProgress != nil && r.resp.ContentLength > 0 {
+		p := make([]byte, 1024)
+		data := bytes.NewBuffer([]byte(""))
+		b := r.resp.Body
+		defer b.Close()
+		total := r.resp.ContentLength
+		var current int64
+		var lastTime time.Time
+
+		defer func() {
+			r.downloadProgress(current, total)
+		}()
+
+		for {
+			l, err := b.Read(p)
+			if l > 0 {
+				data.Write(p)
+				current += int64(l)
+				if now := time.Now(); now.Sub(lastTime) > r.r.progressInterval {
+					lastTime = now
+					r.downloadProgress(current, total)
+				}
+			}
+			if err != nil {
+				if err == io.EOF {
+					return "", err
+				}
+				return "", err
+			}
+		}
+		return string(data.Bytes()), nil
+	} else {
+		data, err := r.ToBytes()
+		return string(data), err
+	}
+
 }
 
 // ToFile download the response body to file with optional download callback
