@@ -99,8 +99,9 @@ func (r *Resp) ToXML(v interface{}) error {
 func (r *Resp) ToStringWithTimeCallBack() (string, error) {
 	if r.downloadProgress != nil && r.resp.ContentLength > 0 {
 		p := make([]byte, 1024)
-		data := bytes.NewBuffer([]byte(""))
 		b := r.resp.Body
+		data := bytes.NewBuffer([]byte(""))
+
 		defer b.Close()
 		total := r.resp.ContentLength
 		var current int64
