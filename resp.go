@@ -50,6 +50,7 @@ func (r *Resp) ToBytes() ([]byte, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
+
 	if r.respBody != nil {
 		return r.respBody, nil
 	}
